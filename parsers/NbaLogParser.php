@@ -82,6 +82,13 @@
 			return $this;
 		}
 		
+		public function run ()
+		{
+			foreach ($this->loadedParsers as $parser) {
+				$parser->parseLogs();
+			}
+		}
+		
 		protected function getLogFiles () 
 		{
 			$files = scandir($this->logDir);
@@ -99,33 +106,11 @@
 			$this->resetLogFileData();
 			$handle = gzopen($file, 'r');
 			while (!gzeof($handle)) {
-				$this->getLogData(gzgets($handle, 4096));
+				$this->parseLine(gzgets($handle, 4096));
 			}
 			gzclose($handle);
 		}
 			
-		protected function getLogData ($line) 
-		{
-			$column =  array_map('trim', explode('|', $line));
-			// We're interested only in the transformer, which is element #3
-			if (strpos($column[2], 'Transformer') !== false) {
-				// Error
-				if ($column[1] == 'ERROR') {
-					$this->logFileData['errors'][] = [
-						'type' => $column[4],
-						'unitId' => $column[3]
-					];
-				// Warning
-				} else if ($column[1] == 'WARN') {
-					$this->logFileData['warnings'][] = [
-						'type' => $column[4],
-						'unitId' => $column[3]
-					];
-				
-				}
-			}
-		}
-		
 		protected function resetLogFileData ()
 		{
 			$this->logFileData = [

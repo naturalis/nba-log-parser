@@ -3,6 +3,6 @@
 
 	$parser = new NbaLogParser;
 	$parser->deleteExistingOutput(true);
-	
+	$parser->run();
 
 	
