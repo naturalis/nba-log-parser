@@ -1,12 +1,8 @@
 <?php
-	require_once 'parsers/NbaLogParser';
+	require_once 'parsers/NbaLogParser.php';
 
 	$parser = new NbaLogParser;
-	$parser
-		->setLogDir('/Users/ruud/Documents/MAMP/htdocs/nba-log/logs')
-		->setOutputDir('/Users/ruud/Documents/MAMP/htdocs/nba-log/output')
-		->deleteExistingOutput(true)
-		->run();
+	$parser->deleteExistingOutput(true);
 	
 
 	

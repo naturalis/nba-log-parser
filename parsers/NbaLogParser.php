@@ -2,15 +2,29 @@
 
 	class NbaLogParser
 	{
-		private $logDir;
-		private $logFiles;
-		private $outputDir;
-		private $logFileData;
-		private $output;
+		protected $logDefaultDir = 'log';
+		protected $outputDefaultDir = 'output';
+		
+		protected $logDir;
+		protected $outputDir;
+		
+		protected $logFiles;
+		protected $logFileData;
+		protected $output;
+		
+		// Set parsers to initialize at startup
+		private $parsers = [
+			'BrahmsLogParser',
+		];
+		// Parsers that have succesfully been loaded
+		protected $loadedParsers;
 		
 		public function __construct ()
 		{
-            
+            $this->setLogDir();
+            $this->setOutputDir();
+            $this->getLogFiles();
+            $this->initialiseParsers();
 		}
 	
         public function __destruct ()
@@ -18,28 +32,44 @@
            
         }
         
-	    public function setLogDir ($dir) 
+	    public function setLogDir ($dir = false) 
         {
-        	$this->logDir = $dir;
+        	$this->logDir = dirname(dirname(__FILE__)) . '/' . $this->logDefaultDir;
+        	if ($dir) {
+        		$this->logDir = $dir;
+        	}
+	    	// Does log dir exist?
+			if (empty($this->logDir) || !is_dir($this->logDir)) {
+				throw new Exception('Log directory ' . $this->logDir . 
+					' is not set or not readable!');
+			}
         	return $this;
         }
         
-        public function setOutputDir ($dir) 
+        public function getLogDir ()
         {
-        	$this->outputDir = $dir;
+        	return $this->logDir;
+        }
+        
+        public function setOutputDir ($dir = false) 
+        {
+            $this->outputDir = dirname(dirname(__FILE__)) . '/' . $this->outputDefaultDir;
+        	if ($dir) {
+        		$this->outputDir = $dir;
+        	}
+        	if (empty($this->outputDir) || !is_writable($this->outputDir)) {
+				throw new Exception('Output directory ' . $this->outputDir . 
+					' is not set or not writable!');
+			}
         	return $this;
         }
         
-		public function run ()
-		{
-            $this->bootstrap();
-            foreach ($this->getLogFiles() as $file) {
-            	$this->parseFile($file);
-            	print_r($this->logFileData);
-            }
-		}
-		
-		public function deleteExistingOutput ($option)
+	    public function getOutputDir ()
+        {
+        	return $this->outputDir;
+        }
+        
+        public function deleteExistingOutput ($option)
 		{
 			if ($option) {
 				$files = scandir($this->outputDir);
@@ -52,24 +82,7 @@
 			return $this;
 		}
 		
-		private function bootstrap ()
-		{
-			// Does log dir exist?
-			if (empty($this->logDir) || !is_dir($this->logDir)) {
-				throw new Exception('Log directory is not set or not readable!');
-			}
-			// Does output dir exist?
-			if (empty($this->outputDir) || !is_writable($this->logDir)) {
-				throw new Exception('Output directory is not set or not writable!');
-			}
-			$this->getLogFiles();
-			// No files present
-			if (count($this->logFiles) == 0) {
-				throw new Exception('No log files present!');
-			}
-		}		
-		
-		private function getLogFiles () 
+		protected function getLogFiles () 
 		{
 			$files = scandir($this->logDir);
 			foreach ($files as $file) {
@@ -120,6 +133,14 @@
 				'warnings' => [],
 			];
 		
+		}
+		
+		private function initialiseParsers () 
+		{
+			foreach ($this->parsers as $file) {
+				require_once $file . '.php';
+				$this->loadedParsers[$file] = new $file($this);
+			}
 		}
 	}
 	
