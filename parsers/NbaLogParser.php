@@ -8,10 +8,6 @@
 		protected $logDir;
 		protected $outputDir;
 		
-		protected $logFiles;
-		protected $logFileData;
-		protected $output;
-		
 		// Set parsers to initialize at startup
 		private $parsers = [
 			'BrahmsLogParser',
@@ -95,15 +91,26 @@
 			foreach ($files as $file) {
 				$info = pathinfo($file);
 				if (isset($info['extension']) && $info['extension'] == 'gz') {
-					$this->logFiles[] = $this->logDir . '/' . $file;
+					$logFiles[] = $this->logDir . '/' . $file;
 				}
 			}
-			return $this->logFiles;
+			return $logFiles;
 		}
+		
+	    protected function selectLogFiles ($identifier, $category = false)
+        {
+         	foreach ($this->getLogFiles() as $file) {	        	
+	        	if (strpos($file, $identifier) !== false) {
+	        		if (!$category || $category && strpos($file, $category) !== false) {
+	        			$selectedFiles[] = $file;
+	        		}
+	        	}
+	        }
+         	return $selectedFiles;
+        }
 		
 		protected function parseFile ($file)
 		{
-			$this->resetLogFileData();
 			$handle = gzopen($file, 'r');
 			while (!gzeof($handle)) {
 				$this->parseLine(gzgets($handle, 4096));
@@ -111,13 +118,38 @@
 			gzclose($handle);
 		}
 			
-		protected function resetLogFileData ()
+		protected function resetFileData ()
 		{
-			$this->logFileData = [
-				'errors' => [],
-				'warnings' => [],
-			];
-		
+			$this->logFileData = [];
+		}
+	
+		protected function summarise () 
+		{
+			// Count warning and errors
+			foreach ($this->logFileData as $file => $data) {
+				foreach (['warnings', 'errors'] as $type) {
+					if (!empty($data[$type])) {
+						foreach ($data[$type] as $k => $message) {
+							// Test if message is in fixed list
+							$text = $this->setWarningMessage($message['type']);
+							if (!isset($output[$type][$text])) {
+								$output[$type][$text] = 0;
+							}
+							$output[$type][$text]++;
+						}
+					}
+				}
+			}
+			$this->logFileData[$this->inputFile]['info']['summary'] = $output;
+		}
+	
+		private function setWarningMessage ($message) {
+			foreach ($this->warnings as $warning) {
+				if (strpos($message, $warning) !== false) {
+					return $warning;
+				}
+			}
+			return $message;
 		}
 		
 		private function initialiseParsers () 
