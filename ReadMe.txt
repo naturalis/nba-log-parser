@@ -1,7 +1,7 @@
 Introduction
 
 This script parses log output from the NBA to csv documents.
-The parser currently supports NBA import logs from Bramhs and CRS; 
+The parser currently supports NBA import logs from Brahms and CRS; 
 other logs are ignored.
 
 
