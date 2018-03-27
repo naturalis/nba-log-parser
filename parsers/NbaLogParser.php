@@ -116,8 +116,13 @@
 				}
 			}
 			if (!empty($this->logFileData[$output])) {
-				$this->logFileData[$output] = 
-					array_merge($this->logFileData[$output], $data);
+				foreach ($data as $label => $count) {
+					if (isset($this->logFileData[$output][$label])) {
+						$this->logFileData[$output][$label] += $data[$label]; 
+					} else {
+						$this->logFileData[$output][$label] = $data[$label]; 
+					}
+				}
 			} else {
 				$this->logFileData[$output] = $data;
 			}
