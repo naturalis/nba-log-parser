@@ -9,7 +9,7 @@ How to use:
 
 The parser has to be initialized with 
 1. an input path (directory of log files to parse) and
-2. an output path (directory to which a subdirectory with the results are written)
+2. an output path (directory to which a subdirectory with the results is written)
 
 Obviously 1 has to be readable and 2 has to be writable.
 It is assumed that the name of 1 consists of just the import date.
