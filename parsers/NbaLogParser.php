@@ -2,57 +2,37 @@
 
 	class NbaLogParser
 	{
-		protected $logDefaultDir = 'log';
-		protected $outputDefaultDir = 'output';
-		
 		protected $logDir;
 		protected $outputDir;
 		
 		// Set parsers to initialize at startup
 		private $parsers = [
-			'BrahmsLogParser',
+			//'BrahmsLogParser',
+			'CrsLogParser',
 		];
 		// Parsers that have succesfully been loaded
 		protected $loadedParsers;
 		
-		public function __construct ()
-		{
-            $this->setLogDir();
-            $this->setOutputDir();
-            $this->getLogFiles();
-            $this->initialiseParsers();
-		}
-	
-        public function __destruct ()
+ 	    public function setLogDir ($dir = false) 
         {
-           
-        }
-        
-	    public function setLogDir ($dir = false) 
-        {
-        	$this->logDir = dirname(dirname(__FILE__)) . '/' . $this->logDefaultDir;
-        	if ($dir) {
-        		$this->logDir = $dir;
-        	}
-	    	// Does log dir exist?
-			if (empty($this->logDir) || !is_dir($this->logDir)) {
+        	$this->logDir = $dir;
+ 			if (empty($this->logDir) || !is_dir($this->logDir)) {
 				throw new Exception('Log directory ' . $this->logDir . 
 					' is not set or not readable!');
 			}
         	return $this;
         }
         
-        public function getLogDir ()
+        public function getLogDir ($stripPath = false)
         {
-        	return $this->logDir;
+       		$dir = substr($this->logDir, -1) == '/' ? substr($this->logDir, 0, -1) :
+        		$this->logDir;
+       		return $stripPath ? basename($dir) : $dir;
         }
         
         public function setOutputDir ($dir = false) 
         {
-            $this->outputDir = dirname(dirname(__FILE__)) . '/' . $this->outputDefaultDir;
-        	if ($dir) {
-        		$this->outputDir = $dir;
-        	}
+        	$this->outputDir = $dir;
         	if (empty($this->outputDir) || !is_writable($this->outputDir)) {
 				throw new Exception('Output directory ' . $this->outputDir . 
 					' is not set or not writable!');
@@ -60,32 +40,184 @@
         	return $this;
         }
         
-	    public function getOutputDir ()
+	    public function getOutputDir ($stripPath = false)
         {
-        	return $this->outputDir;
-        }
+        	$dir = substr($this->outputDir, -1) == '/' ? substr($this->outputDir, 0, -1) :
+        		$this->outputDir;
+      		return $stripPath ? basename($dir) : $dir;
+         }
         
-        public function deleteExistingOutput ($option)
-		{
-			if ($option) {
-				$files = scandir($this->outputDir);
-				foreach ($files as $file) {
-					if ($file[0] !== '.') {
-						unlink($this->outputDir . '/' . $file);
-					}
-				}
-			}
-			return $this;
-		}
-		
 		public function run ()
 		{
-			foreach ($this->loadedParsers as $parser) {
+			 if (empty($this->getLogDir())) {
+			 	throw new Exception('Log directory not set!');
+			 }
+			 if (empty($this->getOutputDir())) {
+			 	throw new Exception('Output directory not set!');
+			 }
+             $this->initialiseParsers();
+			 //$this->getLogFiles();
+			 foreach ($this->loadedParsers as $parser) {
 				$parser->parseLogs();
 			}
 		}
+		    
+        protected function parseLogs ()
+        {
+			foreach ($this->categories as $this->category) {
+				$this->resetFileData();
+		       	foreach ($this->selectLogFiles($this->identifier, $this->category) as $file) {
+		         	$this->resetLineData();
+		         	$this->parseFile($file);
+		         	$this->summariseWarningsAndErrors();
+			        $this->summarizeStatInfo();
+			        $this->summarizeThemeInfo();
+			        $this->writeData();
+		        }
+			}
+        }
+        
+        protected function writeData ()
+		{
+			$this->writeSummary();
+			$this->writeWarnings();
+			$this->writeErrors();
+			$this->writeNormalizationInfo();
+		}
 		
-		protected function getLogFiles () 
+	    protected function summarizeStatInfo ()
+		{
+			$this->getSummary('logLines', 'summary');
+			return $this->logFileData;
+		}
+		
+		protected function summarizeThemeInfo ()
+		{
+			$this->getSummary('themeLines', 'themes');
+			return $this->logFileData;
+		}
+		
+		protected function getSummary ($input, $output) 
+		{
+			$data = [];
+			foreach ($this->logFileData as $source => $file) {
+				if (isset($file[$input])) {
+					foreach ($file[$input] as $line) {
+						$column =  array_map('trim', explode(':', $line));
+						if (count($column) == 3) {
+							list($blah, $label, $count) = $column;
+							if (!isset($data[$label])) {
+								$data[$label] = $count;
+							} else {
+								$data[$label] += $count;
+							}
+						}
+					}
+				}
+			}
+			if (!empty($this->logFileData[$output])) {
+				$this->logFileData[$output] = 
+					array_merge($this->logFileData[$output], $data);
+			} else {
+				$this->logFileData[$output] = $data;
+			}
+			return $this->logFileData;
+		}
+		
+		protected function writeSummary () 
+		{
+			$print = [
+				['Source', $this->identifier],
+				['Type', $this->category],
+				['Date', $this->getLogDir(true)],
+				['Files', implode("\n", $this->selectLogFiles($this->identifier, $this->category))]
+			];
+			// Compile warning and error stats
+			foreach (array_merge($this->logFileData['summary'], 
+				$this->logFileData['themes']) as $label => $value) {
+				$print[] = [$label, $value];
+			}
+			// Add individual warning/error summaries for each file
+			/*
+			foreach ($this->logFileData as $file => $data) {
+//print_r($this->inputFiles);	echo "$file<br>";		
+				if (in_array($file, $this->inputFiles) && $file !== 0) {
+					$print[] = ['', ''];
+					$print[] = [$file, ''];
+					if (!empty($data['summary'])) {
+						foreach ($data['summary'] as $type => $line) {
+							foreach ($line as $message => $count) {
+								$print[] = [$type . ': ' . $message, $count];
+							}
+						}
+					}
+				}
+			}
+			*/
+			foreach (['warning', 'error'] as $type) {
+				if (!empty($this->logFileData[$type])) {
+					foreach ($this->logFileData[$type] as $message => $count) {
+						$print[] = [ucfirst($type) . ': ' . $message, $count];
+					}
+				}
+			}
+			// Create parent directory 
+			if (!file_exists($this->setCsvBasePath())) {
+			    mkdir($this->setCsvBasePath(), 0777, true);
+			}
+			$fp = fopen($this->setCsvBasePath() . 'summary.csv', 'w');
+			foreach ($print as $row) {
+//print_r($row);				
+				fputcsv($fp, $row);
+			}
+			fclose($fp);
+		}
+		
+		protected function writeWarnings ()
+		{
+			$this->writeFile('warnings.csv', 'Warning', 'warning');
+		}
+		
+		protected function writeErrors ()
+		{
+			$this->writeFile('errors.csv', 'Error', 'error');
+		}
+		
+		protected function writeNormalizationInfo () 
+		{
+			$fp = fopen($this->setCsvBasePath() . 'normalization.csv', 'w');
+			fputcsv($fp, ['Info', 'File']);
+			foreach ($this->logFileData as $file => $data) {
+				if (isset($data['normalizeLines'])) {
+					foreach ($data['normalizeLines'] as $message) {
+						fputcsv($fp, [$message, $file]);
+					}
+				}
+			}
+			fclose($fp);
+		}
+		
+		protected function writeFile ($fileName, $title, $section) 
+		{
+			$fp = fopen($this->setCsvBasePath() . $fileName, 'w');
+			fputcsv($fp, [$title, 'Unit id', 'File']);
+			foreach ($this->logFileData as $file => $data) {
+				if (isset($data[$section])) {
+					foreach ($data[$section] as $message) {
+						fputcsv($fp, [$message['type'], $message['unitId'], $file]);
+					}
+				}
+			}
+			fclose($fp);
+		}
+		
+		protected function setCsvBasePath () 
+		{
+			return $this->getOutputDir() . '/' . $this->identifier . '_' . 
+				$this->category . '_' . $this->getLogDir(true) . '/';
+		}
+		
+       protected function getLogFiles () 
 		{
 			$files = scandir($this->logDir);
 			foreach ($files as $file) {
@@ -120,30 +252,37 @@
 			
 		protected function resetFileData ()
 		{
-			$this->logFileData = [];
+			$this->logFileData = false;
 		}
 	
-		protected function summarise () 
+		protected function resetLineData ()
+        {
+		    $this->inputFile = false;
+        	$this->breakCounter = 0;
+        	$this->infoLineCounter = 0;
+        }
+        
+ 		protected function summariseWarningsAndErrors () 
 		{
 			// Count warning and errors
 			foreach ($this->logFileData as $file => $data) {
-				foreach (['warnings', 'errors'] as $type) {
+				foreach (['warning', 'error'] as $type) {
 					if (!empty($data[$type])) {
 						foreach ($data[$type] as $k => $message) {
 							// Test if message is in fixed list
 							$text = $this->setWarningMessage($message['type']);
-							if (!isset($output[$type][$text])) {
-								$output[$type][$text] = 0;
+							if (!isset($this->logFileData[$type][$text])) {
+								$this->logFileData[$type][$text] = 0;
 							}
-							$output[$type][$text]++;
+							$this->logFileData[$type][$text]++;
 						}
 					}
 				}
 			}
-			$this->logFileData[$this->inputFile]['info']['summary'] = $output;
+			return $this->logFileData;
 		}
 	
-		private function setWarningMessage ($message) {
+		protected function setWarningMessage ($message) {
 			foreach ($this->warnings as $warning) {
 				if (strpos($message, $warning) !== false) {
 					return $warning;
@@ -159,5 +298,6 @@
 				$this->loadedParsers[$file] = new $file($this);
 			}
 		}
+		
 	}
 	
