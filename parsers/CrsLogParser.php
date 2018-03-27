@@ -26,5 +26,13 @@
 			$this->outputDir = $main->getOutputDir();
 		}
 		
+		protected function getInputFileName ($s)
+		{
+			$tmp = explode(' ', $s);
+			return array_pop($tmp);			
+		}
+		
+
+		
 	}
 	

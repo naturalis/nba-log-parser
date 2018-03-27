@@ -27,13 +27,13 @@
 			$this->logDir = $main->getLogDir();
 			$this->outputDir = $main->getOutputDir();
 		}
-	
+		
 		protected function parseLine ($line) 
 		{			
 			$column =  array_map('trim', explode('|', $line));			
 			// Input file info; assumes start of interesting data
 			if (strpos($column[2], 'Processing file') !== false) {
-				$this->inputFile = substr($column[2], strpos($column[2], '/'));
+				$this->inputFile = $this->getInputFileName($column[2]);
 			}
 			
 			// Stats start at the break counter; simply add lines to output
@@ -79,6 +79,11 @@
 			}
 		}
 
+		protected function getInputFileName ($s)
+		{
+			return substr($s, strpos($s, '/'));	
+		} 
+	
 		protected function writeFile ($fileName, $title, $section) 
 		{
 			$fp = fopen($this->setCsvBasePath() . $fileName, 'w');
