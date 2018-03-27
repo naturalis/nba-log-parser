@@ -137,23 +137,7 @@
 				$this->logFileData['themes']) as $label => $value) {
 				$print[] = [$label, $value];
 			}
-			// Add individual warning/error summaries for each file
-			/*
-			foreach ($this->logFileData as $file => $data) {
-//print_r($this->inputFiles);	echo "$file<br>";		
-				if (in_array($file, $this->inputFiles) && $file !== 0) {
-					$print[] = ['', ''];
-					$print[] = [$file, ''];
-					if (!empty($data['summary'])) {
-						foreach ($data['summary'] as $type => $line) {
-							foreach ($line as $message => $count) {
-								$print[] = [$type . ': ' . $message, $count];
-							}
-						}
-					}
-				}
-			}
-			*/
+			// Errors and warnings
 			foreach (['warning', 'error'] as $type) {
 				if (!empty($this->logFileData[$type])) {
 					foreach ($this->logFileData[$type] as $message => $count) {
@@ -167,7 +151,6 @@
 			}
 			$fp = fopen($this->setCsvBasePath() . 'summary.csv', 'w');
 			foreach ($print as $row) {
-//print_r($row);				
 				fputcsv($fp, $row);
 			}
 			fclose($fp);
@@ -191,20 +174,6 @@
 				if (isset($data['normalizeLines'])) {
 					foreach ($data['normalizeLines'] as $message) {
 						fputcsv($fp, [$message, $file]);
-					}
-				}
-			}
-			fclose($fp);
-		}
-		
-		protected function writeFile ($fileName, $title, $section) 
-		{
-			$fp = fopen($this->setCsvBasePath() . $fileName, 'w');
-			fputcsv($fp, [$title, 'Unit id', 'File']);
-			foreach ($this->logFileData as $file => $data) {
-				if (isset($data[$section])) {
-					foreach ($data[$section] as $message) {
-						fputcsv($fp, [$message['type'], $message['unitId'], $file]);
 					}
 				}
 			}

@@ -16,7 +16,6 @@
 		];
 		protected $logFileData;
 		protected $inputFile;
-		protected $inputFiles;
 		
 		protected $breakCounter = 0;
 		protected $infoBlockNrLines = 22;
@@ -35,7 +34,6 @@
 			// Input file info; assumes start of interesting data
 			if (strpos($column[2], 'Processing file') !== false) {
 				$this->inputFile = substr($column[2], strpos($column[2], '/'));
-				$this->inputFiles[] = $this->inputFile;
 			}
 			
 			// Stats start at the break counter; simply add lines to output
@@ -80,6 +78,21 @@
 				$this->logFileData[$this->inputFile]['normalizeLines'][] = $tmp[1];
 			}
 		}
+
+		protected function writeFile ($fileName, $title, $section) 
+		{
+			$fp = fopen($this->setCsvBasePath() . $fileName, 'w');
+			fputcsv($fp, [$title, 'Unit id', 'File']);
+			foreach ($this->logFileData as $file => $data) {
+				if (isset($data[$section])) {
+					foreach ($data[$section] as $message) {
+						fputcsv($fp, [$message['type'], $message['unitId'], $file]);
+					}
+				}
+			}
+			fclose($fp);
+		}
+		
 		
 	}
 	

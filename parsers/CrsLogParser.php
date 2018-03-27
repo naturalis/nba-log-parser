@@ -15,7 +15,8 @@
 			'Invalid or insufficient specimen identification information',
 			'Invalid latitude',
 			'Invalid longitude',
-			'Invalid date in element'
+			'Invalid date in element',
+			'Invalid image URL'
 		];		
 		
 		// Same as Brahms
