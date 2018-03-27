@@ -7,7 +7,7 @@
 		
 		// Set parsers to initialize at startup
 		private $parsers = [
-			//'BrahmsLogParser',
+			'BrahmsLogParser',
 			'CrsLogParser',
 		];
 		// Parsers that have succesfully been loaded
