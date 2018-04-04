@@ -1,10 +1,11 @@
 <?php
 	require_once 'parsers/NbaLogParser.php';
+	require_once 'config.php'; // set log and output dirs here!
 
 	$parser = new NbaLogParser;
 	$parser
-		->setLogDir('/Users/ruud/ETI/Zend workbenches/Current/nba-log-parser/2018-03-14')
-		->setOutputDir('/Users/ruud/ETI/Zend workbenches/Current/nba-log-parser/output')
+		->setLogDir($logDir)
+		->setOutputDir($outputDir)
 		->run();
 	
 	echo 'Ready';
