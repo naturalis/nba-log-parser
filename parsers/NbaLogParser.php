@@ -1,4 +1,6 @@
 <?php
+	// Make sure we have some memory to work with...
+	ini_set('memory_limit', '1024M');
 
 	class NbaLogParser
 	{
@@ -9,6 +11,7 @@
 		private $parsers = [
 			'BrahmsLogParser',
 			'CrsLogParser',
+			'CoLLogParser',
 		];
 		// Parsers that have succesfully been loaded
 		protected $loadedParsers;

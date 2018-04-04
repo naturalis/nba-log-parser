@@ -4,6 +4,9 @@ This script parses log output from the NBA to csv documents.
 The parser currently supports NBA import logs from Brahms and CRS; 
 other logs are ignored.
 
+NBA logs are large, so make sure to allocate enough memory to PHP!
+1GB should suffice.
+
 
 How to use:
 

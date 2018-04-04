@@ -1,6 +1,5 @@
 <?php
 	require_once 'parsers/NbaLogParser.php';
-	ini_set('memory_limit', '1024M');
 
 	$parser = new NbaLogParser;
 	$parser
