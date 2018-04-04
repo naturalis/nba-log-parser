@@ -17,7 +17,7 @@ The parser has to be initialized with
 
 Copy config.php.tpl, add the correct paths and save the file as config.php.
 
-Obviously inputhas to be readable and output has to be writable.
+Obviously input has to be readable and output has to be writable.
 It is assumed that the name of 1 consists of just the import date.
 See index.php for an example.
 
