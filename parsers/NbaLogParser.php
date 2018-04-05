@@ -1,11 +1,15 @@
 <?php
+
 	// Make sure we have some memory to work with...
 	ini_set('memory_limit', '1024M');
+	// ... and some time
+	set_time_limit(300);
 
 	class NbaLogParser
 	{
 		protected $logDir;
 		protected $outputDir;
+		protected $loadedParsers;
 		
 		// Set parsers to initialize at startup
 		private $parsers = [
@@ -13,8 +17,13 @@
 			'CrsLogParser',
 			'CoLLogParser',
 		];
-		// Parsers that have succesfully been loaded
-		protected $loadedParsers;
+		// These lines appear twice in the summaries!
+		private $half = [
+			'Records accepted', 
+			'Specimens accepted', 
+			'Multimedia accepted', 
+			'Objects accepted',
+		];
 		
  	    public function setLogDir ($dir = false) 
         {
@@ -72,11 +81,11 @@
 		       	foreach ($this->selectLogFiles($this->identifier, $this->category) as $file) {
 		         	$this->resetLineData();
 		         	$this->parseFile($file);
-		         	$this->summariseWarningsAndErrors();
-			        $this->summarizeStatInfo();
-			        $this->summarizeThemeInfo();
-			        $this->writeData();
 		        }
+	         	$this->summariseWarningsAndErrors();
+		        $this->summarizeStatInfo();
+		        $this->summarizeThemeInfo();
+		        $this->writeData();
 			}
         }
         
@@ -104,7 +113,7 @@
 		{
 			$data = [];
 			foreach ($this->logFileData as $source => $file) {
-				if (isset($file[$input])) {
+				if (isset($file[$input])) {			
 					foreach ($file[$input] as $line) {
 						$column =  array_map('trim', explode(':', $line));
 						if (count($column) == 3) {
@@ -118,17 +127,13 @@
 					}
 				}
 			}
-			if (!empty($this->logFileData[$output])) {
-				foreach ($data as $label => $count) {
-					if (isset($this->logFileData[$output][$label])) {
-						$this->logFileData[$output][$label] += $data[$label]; 
-					} else {
-						$this->logFileData[$output][$label] = $data[$label]; 
-					}
+			// Some post-processing...
+			foreach ($data as $label => $count) {
+				if (in_array($label, $this->half)) {
+					$data[$label] = $count/2;
 				}
-			} else {
-				$this->logFileData[$output] = $data;
 			}
+			$this->logFileData[$output] = $data;
 			return $this->logFileData;
 		}
 		
