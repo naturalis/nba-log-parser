@@ -118,6 +118,7 @@
 						$column =  array_map('trim', explode(':', $line));
 						if (count($column) == 3) {
 							list($blah, $label, $count) = $column;
+							$count = $this->checkCountSummary($label, $count);
 							if (!isset($data[$label])) {
 								$data[$label] = $count;
 							} else {
@@ -127,14 +128,17 @@
 					}
 				}
 			}
-			// Some post-processing...
-			foreach ($data as $label => $count) {
-				if (in_array($label, $this->half)) {
-					$data[$label] = $count/2;
-				}
-			}
 			$this->logFileData[$output] = $data;
 			return $this->logFileData;
+		}
+		
+		// Some lines appear twice in info block...
+		protected function checkCountSummary ($label, $count)
+		{
+			if (in_array($label, $this->half)) {
+				return $count/2;
+			}
+			return $count;
 		}
 		
 		protected function writeSummary () 
