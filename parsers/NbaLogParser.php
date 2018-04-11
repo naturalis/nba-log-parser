@@ -236,6 +236,20 @@
 			gzclose($handle);
 		}
 			
+		protected function writeFile ($fileName, $title, $section) 
+		{
+			$fp = fopen($this->setCsvBasePath() . $fileName, 'w');
+			fputcsv($fp, [$title, 'Unit id', 'File']);
+			foreach ($this->logFileData as $file => $data) {
+				if (isset($data[$section])) {
+					foreach ($data[$section] as $message) {
+						fputcsv($fp, [$message['type'], $message['unitId'], $file]);
+					}
+				}
+			}
+			fclose($fp);
+		}
+		
 		protected function resetFileData ()
 		{
 			$this->logFileData = false;
