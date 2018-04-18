@@ -118,7 +118,8 @@
 						$column =  array_map('trim', explode(':', $line));
 						if (count($column) == 3) {
 							list($blah, $label, $count) = $column;
-							$count = $this->checkCountSummary($label, $count);
+							$count = $this->checkCountSummary($label, $count, 
+								$this->category == 'multimedia');
 							if (!isset($data[$label])) {
 								$data[$label] = $count;
 							} else {
@@ -133,9 +134,9 @@
 		}
 		
 		// Some lines appear twice in info block...
-		protected function checkCountSummary ($label, $count)
+		protected function checkCountSummary ($label, $count, $overrule = false)
 		{
-			if (in_array($label, $this->half)) {
+			if (!$overrule && in_array($label, $this->half)) {
 				return $count/2;
 			}
 			return $count;
