@@ -1,7 +1,7 @@
 <?php
 
 	// Make sure we have some memory to work with...
-	ini_set('memory_limit', '1024M');
+	ini_set('memory_limit', '2048M');
 	// ... and some time
 	set_time_limit(300);
 
