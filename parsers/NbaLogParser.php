@@ -232,7 +232,7 @@
 		{
 			$handle = gzopen($file, 'r');
 			while (!gzeof($handle)) {
-				$this->parseLine(gzgets($handle, 4096));
+				$this->parseLine(gzgets($handle, 8192));
 			}
 			gzclose($handle);
 		}
